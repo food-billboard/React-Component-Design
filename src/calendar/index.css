@@ -1,0 +1,66 @@
+.glf-calendar {
+  font-size: 1.5rem;
+  display: flex;
+  flex-direction: column;
+}
+.glf-calendar-header,
+.glf-calendar-footer {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 2% 0;
+}
+.glf-calendar-content {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  grid-template-rows: repeat(7, 1fr);
+  /* grid-gap: 1%; */
+  place-items: center;
+}
+.glf-calendar-content-week {
+  font-weight: bold;
+}
+.glf-calendar-content-days {
+}
+.glf-calendar-default-active {
+  box-shadow: 0 0 0.1em;
+}
+.glf-calendar-item {
+  font-size: 1em;
+  /* display: flex;
+  flex-direction: column;
+  align-items: center; */
+  position: relative;
+  left: 0;
+  top: 0;
+  cursor: pointer;
+  padding: 0.15em;
+}
+.glf-calendar-item-main {
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+}
+.glf-calendar-item-main {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.glf-calendar-date {
+  font-weight: 500;
+  width: 2em;
+  height: 2em;
+  line-height: 2em;
+  border-radius: 50%;
+  text-align: center;
+}
+.glf-calendar-lunar {
+  font-size: 0.6em;
+}
+.glf-calendar-hot {
+  width: 5px;
+  height: 5px;
+  margin-top: 5px;
+  border-radius: 50%;
+}
