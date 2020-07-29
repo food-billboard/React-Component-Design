@@ -82,6 +82,12 @@ export default class extends Component {
     }
   ];
 
+  _value
+
+  get value(){
+    return this.state.date
+  }
+
   handleClick = item => {
     const { date } = item;
     const { value } = this.props;
@@ -97,13 +103,13 @@ export default class extends Component {
   getMonthStart = (
     month = new Date().getMonth() + 1,
     year = new Date().getFullYear()
-  ) => new Date(year, month - 1).getDay();
+  ) => new Date(year, month - 1);
 
   //获取月最后一天(周)
   getMonthEnd = (
     month = new Date().getMonth() + 1,
     year = new Date().getFullYear()
-  ) => new Date(year, month, 0).getDay();
+  ) => new Date(year, month, 0);
 
   //获取当前月天数
   getMonthDays = (
@@ -117,51 +123,61 @@ export default class extends Component {
     const { date } = this.state;
     const month = date.getMonth() + 1;
     const year = date.getFullYear();
+    const day = date.getDate()
     let visibleDate = [...this.week];
-    const first = this.getMonthStart(month, year);
-    const last = this.getMonthEnd(month, year);
-    const _date = new Date(year, month - 2);
-    const prevMonthDays = this.getMonthDays(
-      _date.getMonth() + 1,
-      _date.getFullYear()
-    );
+    if(!collapse) {
+      const first = this.getMonthStart(month, year).getDay();
+      const last = this.getMonthEnd(month, year).getDay();
+      const _date = new Date(year, month - 2);
+      const prevMonthDays = this.getMonthDays(
+        _date.getMonth() + 1,
+        _date.getFullYear()
+      );
+      visibleDate = [
+        ...visibleDate,
+        ...new Array(showLastNext ? first : 0).fill(0).map((_, index) => ({
+          type: "last",
+          value: prevMonthDays - first + index + 1,
+          date: new Date(year, month - 2, prevMonthDays - first + index + 1)
+        })),
+        ...new Array(this.getMonthDays(month, year)).fill(0).map((_, index) => ({
+          type: "now",
+          value: index + 1,
+          date: new Date(year, month - 1, index + 1)
+        })),
+        ...new Array(showLastNext ? 6 - last : 0).fill(0).map((_, index) => ({
+          type: "next",
+          value: index + 1,
+          date: new Date(year, month, index + 1)
+        }))
+      ];
+      return visibleDate
+    }
+    let [weekStart] = this.getThisWeek(new Date(year, month - 1, day));
     visibleDate = [
-      ...visibleDate,
-      ...new Array(showLastNext ? first : 0).fill(0).map((_, index) => ({
-        type: "last",
-        value: prevMonthDays - first + index + 1,
-        date: new Date(year, month - 2, prevMonthDays - first + index + 1)
-      })),
-      ...new Array(this.getMonthDays(month, year)).fill(0).map((_, index) => ({
-        type: "now",
-        value: index + 1,
-        date: new Date(year, month - 1, index + 1)
-      })),
-      ...new Array(showLastNext ? 6 - last : 0).fill(0).map((_, index) => ({
-        type: "next",
-        value: index + 1,
-        date: new Date(year, month, index + 1)
-      }))
-    ];
-    if (!collapse) return visibleDate;
-
-    const [weekStart, weekEnd] = this.getThisWeek(date);
-    const start = visibleDate.findIndex(
-      cur => !!cur.date && cur.date.getTime() === weekStart.getTime()
-    );
-    const end = visibleDate.findIndex(
-      cur => !!cur.date && cur.date.getTime() === weekEnd.getTime()
-    );
-    if (!~start || !~end) return visibleDate;
-    return [...visibleDate.slice(0, 7), ...visibleDate.slice(start, end + 1)];
+      //更改顺序
+      ...[...visibleDate.slice(1), ...visibleDate.slice(0, 1)],
+      ...new Array(7).fill(0).map(_ => {
+        const date = {
+          type: 'now',
+          value: weekStart.getDate(),
+          date: new Date(weekStart)
+        }
+        weekStart.setDate(weekStart.getDate() + 1)
+        return date
+      })
+    ]
+    return visibleDate
   };
 
   //时间改变
-  changeDate = (type, isNext) => {
+  changeDate = (type, isNext, _value=false) => {
     const { date } = this.state;
-    const year = date.getFullYear();
-    const month = date.getMonth() + 1;
-    const day = date.getDate();
+    const { value } = this.props
+    const _date = (!!_value && _value) || (!!value && value) || date
+    const year = _date.getFullYear();
+    const month = _date.getMonth() + 1;
+    const day = _date.getDate();
     const realDate = new Date(year, month - 1, day);
     const num = Math.pow(-1, Number(isNext));
     switch (type) {
@@ -179,30 +195,35 @@ export default class extends Component {
         realDate.setDate(day + num);
         break;
     }
-    this.setState({
-      date: realDate
-    });
+    if(_value === false && value === false) {
+      this.setState({
+        date: realDate
+      });
+    }else if(_values === false) {
+      this.props.onChange && this.props.onChange(realDate)
+    }
+    return realDate
   };
 
-  next = type => this.changeDate(type, true);
+  next = (type, date) => this.changeDate(type, true, date);
 
-  last = type => this.changeDate(type, false);
+  last = (type, date) => this.changeDate(type, false, date);
 
-  lastYear = () => this.last("year");
+  lastYear = (date) => this.last("year", date);
 
-  lastMonth = () => this.last("month");
+  lastMonth = (date) => this.last("month", date);
 
-  lastWeek = () => this.last("week");
+  lastWeek = (date) => this.last("week", date);
 
-  lastDay = () => this.last("day");
+  lastDay = (date) => this.last("day", date);
 
-  nextYear = () => this.next("year");
+  nextYear = (date) => this.next("year", date);
 
-  nextMonth = () => this.next("month");
+  nextMonth = (date) => this.next("month", date);
 
-  nextWeek = () => this.next("week");
+  nextWeek = (date) => this.next("week", date);
 
-  nextDay = () => this.next("day");
+  nextDay = (date) => this.next("day", date);
 
   getThisWeek = date => {
     const weekDay = date.getDay();
@@ -388,7 +409,7 @@ export default class extends Component {
                     />
                   )}
                 <div className="glf-calendar-slot">
-                  {this.props.renderFooter
+                  {this.props.renderDateFooter
                     ? typeof this.props.renderDateFooter === "function"
                       ? this.props.renderDateFooter(date)
                       : this.props.renderDateFooter

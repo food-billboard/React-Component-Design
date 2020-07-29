@@ -9,5 +9,11 @@
     "noUnusedLocals": true,
     "rootDir": "src",
     "outDir": "lib"
-  }
+  },
+  "exclude": [
+    "node_modules",
+    "lib",
+    "es"
+  ],
+  "compileOnSave": false
 }
