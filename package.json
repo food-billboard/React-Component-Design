@@ -1,7 +1,7 @@
 {
-  "name": "react-component-calendar",
+  "name": "react-component-design",
   "version": "1.0.0",
-  "description": "react日历组件",
+  "description": "react组件库",
   "main": "index.js",
   "scripts": {
     "start": "webpack-dev-server --config config/webpack.dev.config.js",
@@ -14,8 +14,8 @@
   },
   "keywords": [
     "React",
-    "Calendar",
-    "Component"
+    "Component",
+    "UI"
   ],
   "author": "Daniel-glf",
   "license": "ISC",
