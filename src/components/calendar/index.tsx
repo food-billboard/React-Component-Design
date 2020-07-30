@@ -1,9 +1,54 @@
-import React, { Component } from "react";
+import React, { Component, ReactNode } from "react";
 import { getDateName, sixteen2Rgb } from "./utils";
 import "./index.css";
 
-export default class extends Component {
-  static defaultProps = {
+export interface CalendarProps {
+  collapse?: boolean
+  lunerVisible?: boolean
+  showToday?: boolean
+  showWeek?: boolean
+  activeStyle?: any
+  value?: false | Date | number
+  hot?: false | Array<Date> | ((date: Date) => boolean)
+  renderHeader?: false | ((date: Date) => ReactNode)
+  renderFooter?: false | ((date: Date) => ReactNode)
+  renderDateFooter?: false | ((date: Date) => ReactNode)
+  onChange: false | ((date: Date) => any)
+  colorStyle?: string
+  showLastNext?: boolean
+}
+
+interface CalendarState {
+  date: Date
+}
+
+interface ItemWeekType {
+  type: EDateType
+  value: string | number
+}
+
+interface ItemDateType extends ItemWeekType {
+  date: Date
+}
+
+enum EDateChangeType {
+  'year',
+  'month',
+  'week',
+  'day'
+}
+
+enum EDateType {
+  'week',
+  'now',
+  'last',
+  'next'
+}
+
+const DEFAULT_COLOR_STYLE = '#00CC73'
+
+class Calendar extends Component<CalendarProps, CalendarState> {
+  public static defaultProps: CalendarProps = {
     collapse: false,
     lunerVisible: true,
     showToday: true,
@@ -14,13 +59,14 @@ export default class extends Component {
     renderHeader: false,
     renderFooter: false,
     renderDateFooter: false,
-    colorStyle: "#00CC73",
+    colorStyle: DEFAULT_COLOR_STYLE,
+    onChange: false,
     showLastNext: true
   };
 
-  constructor() {
-    super(...arguments);
-    const { value } = this.props;
+  public constructor(props: CalendarProps) {
+    super(props);
+    const { value } = props;
     let realDate;
     if (
       !value ||
@@ -36,59 +82,60 @@ export default class extends Component {
     };
   }
 
-  componentDidUpdate = prevProps => {
+  public componentDidUpdate = (prevProps: CalendarProps) => {
     const { value: prevValue } = prevProps;
     const { value } = this.props;
     if (
+      !!value &&
       prevValue !== value &&
       (typeof value === "number" ||
         Object.prototype.toString.call(value) === "[object Date]")
     ) {
-      let realDate = new Date(value);
+      let realDate:Date = new Date(value);
       this.setState({
         date: realDate
       });
     }
   };
 
-  week = [
+  readonly week: Array<ItemWeekType> = [
     {
-      type: "week",
+      type: EDateType.week,
       value: "日"
     },
     {
-      type: "week",
+      type: EDateType.week,
       value: "一"
     },
     {
-      type: "week",
+      type: EDateType.week,
       value: "二"
     },
     {
-      type: "week",
+      type: EDateType.week,
       value: "三"
     },
     {
-      type: "week",
+      type: EDateType.week,
       value: "四"
     },
     {
-      type: "week",
+      type: EDateType.week,
       value: "五"
     },
     {
-      type: "week",
+      type: EDateType.week,
       value: "六"
     }
   ];
 
-  _value
+  // private _value:Date
 
-  get value(){
+  public get value(){
     return this.state.date
   }
 
-  handleClick = item => {
+  private handleClick = (item: ItemDateType) => {
     const { date } = item;
     const { value } = this.props;
     if (!value) {
@@ -100,66 +147,73 @@ export default class extends Component {
   };
 
   //获取当前月第一天(周)
-  getMonthStart = (
-    month = new Date().getMonth() + 1,
-    year = new Date().getFullYear()
-  ) => new Date(year, month - 1);
+  public getMonthStart = (
+    month:number = new Date().getMonth() + 1,
+    year:number = new Date().getFullYear()
+  ):Date => new Date(year, month - 1);
 
   //获取月最后一天(周)
-  getMonthEnd = (
-    month = new Date().getMonth() + 1,
-    year = new Date().getFullYear()
-  ) => new Date(year, month, 0);
+  public getMonthEnd = (
+    month:number = new Date().getMonth() + 1,
+    year:number = new Date().getFullYear()
+  ):Date => new Date(year, month, 0);
 
   //获取当前月天数
-  getMonthDays = (
-    month = new Date().getMonth() + 1,
-    year = new Date().getFullYear()
-  ) => new Date(year, month, 0).getDate();
+  public getMonthDays = (
+    month:number = new Date().getMonth() + 1,
+    year:number = new Date().getFullYear()
+  ): number => new Date(year, month, 0).getDate();
 
   //获取需要显示的日期数据
-  getVisibleDate = () => {
+  private getVisibleDate = (): Array<ItemWeekType | ItemDateType> => {
     const { collapse, showLastNext } = this.props;
     const { date } = this.state;
-    const month = date.getMonth() + 1;
-    const year = date.getFullYear();
-    const day = date.getDate()
-    let visibleDate = [...this.week];
+
+    const month:number = date.getMonth() + 1;
+    const year:number = date.getFullYear();
+    const day:number = date.getDate()
+
+    let visibleDate:Array<ItemWeekType | ItemDateType> = [...this.week];
+
+    //非折叠
     if(!collapse) {
-      const first = this.getMonthStart(month, year).getDay();
-      const last = this.getMonthEnd(month, year).getDay();
-      const _date = new Date(year, month - 2);
+      const first: number = this.getMonthStart(month, year).getDay();
+      const last: number = this.getMonthEnd(month, year).getDay();
+      const _date: Date = new Date(year, month - 2);
       const prevMonthDays = this.getMonthDays(
         _date.getMonth() + 1,
         _date.getFullYear()
       );
+
       visibleDate = [
         ...visibleDate,
         ...new Array(showLastNext ? first : 0).fill(0).map((_, index) => ({
-          type: "last",
+          type: EDateType.last,
           value: prevMonthDays - first + index + 1,
           date: new Date(year, month - 2, prevMonthDays - first + index + 1)
         })),
         ...new Array(this.getMonthDays(month, year)).fill(0).map((_, index) => ({
-          type: "now",
+          type: EDateType.now,
           value: index + 1,
           date: new Date(year, month - 1, index + 1)
         })),
         ...new Array(showLastNext ? 6 - last : 0).fill(0).map((_, index) => ({
-          type: "next",
+          type: EDateType.next,
           value: index + 1,
           date: new Date(year, month, index + 1)
         }))
       ];
       return visibleDate
     }
+
+    //折叠
     let [weekStart] = this.getThisWeek(new Date(year, month - 1, day));
     visibleDate = [
       //更改顺序
       ...[...visibleDate.slice(1), ...visibleDate.slice(0, 1)],
       ...new Array(7).fill(0).map(_ => {
         const date = {
-          type: 'now',
+          type: EDateType.now,
           value: weekStart.getDate(),
           date: new Date(weekStart)
         }
@@ -171,26 +225,26 @@ export default class extends Component {
   };
 
   //时间改变
-  changeDate = (type, isNext, _value=false) => {
+  private changeDate = (type: EDateChangeType, isNext: boolean, _value: false | Date=false): Date => {
     const { date } = this.state;
     const { value } = this.props
-    const _date = (!!_value && _value) || (!!value && value) || date
-    const year = _date.getFullYear();
-    const month = _date.getMonth() + 1;
-    const day = _date.getDate();
-    const realDate = new Date(year, month - 1, day);
+    const _date:Date = new Date((!!_value && _value) || (!!value && value) || date)
+    const year: number = _date.getFullYear();
+    const month: number = _date.getMonth() + 1;
+    const day: number = _date.getDate();
+    const realDate: Date = new Date(year, month - 1, day);
     const num = Math.pow(-1, Number(isNext));
     switch (type) {
-      case "week":
+      case EDateChangeType.week:
         realDate.setDate(day + 7 * num);
         break;
-      case "month":
+      case EDateChangeType.month:
         realDate.setMonth(month - 1 + num);
         break;
-      case "year":
+      case EDateChangeType.year:
         realDate.setFullYear(year + num);
         break;
-      case "day":
+      case EDateChangeType.day:
       default:
         realDate.setDate(day + num);
         break;
@@ -199,37 +253,37 @@ export default class extends Component {
       this.setState({
         date: realDate
       });
-    }else if(_values === false) {
+    }else if(_value === false) {
       this.props.onChange && this.props.onChange(realDate)
     }
     return realDate
   };
 
-  next = (type, date) => this.changeDate(type, true, date);
+  public next = (type: EDateChangeType, date?: Date) => this.changeDate(type, true, date);
 
-  last = (type, date) => this.changeDate(type, false, date);
+  public last = (type: EDateChangeType, date?: Date) => this.changeDate(type, false, date);
 
-  lastYear = (date) => this.last("year", date);
+  public lastYear = (date?: Date) => this.last(EDateChangeType.year, date);
 
-  lastMonth = (date) => this.last("month", date);
+  public lastMonth = (date?: Date) => this.last(EDateChangeType.month, date);
 
-  lastWeek = (date) => this.last("week", date);
+  public lastWeek = (date?: Date) => this.last(EDateChangeType.week, date);
 
-  lastDay = (date) => this.last("day", date);
+  public lastDay = (date?: Date) => this.last(EDateChangeType.day, date);
 
-  nextYear = (date) => this.next("year", date);
+  public nextYear = (date?: Date) => this.next(EDateChangeType.year, date);
 
-  nextMonth = (date) => this.next("month", date);
+  public nextMonth = (date?: Date) => this.next(EDateChangeType.month, date);
 
-  nextWeek = (date) => this.next("week", date);
+  public nextWeek = (date?: Date) => this.next(EDateChangeType.week, date);
 
-  nextDay = (date) => this.next("day", date);
+  public nextDay = (date?: Date) => this.next(EDateChangeType.day, date);
 
-  getThisWeek = date => {
-    const weekDay = date.getDay();
-    const day = date.getDate();
-    const year = date.getFullYear();
-    const month = date.getMonth();
+  public getThisWeek = (date: Date): [Date, Date] => {
+    const weekDay:number = date.getDay();
+    const day: number = date.getDate();
+    const year: number = date.getFullYear();
+    const month: number = date.getMonth();
     return [
       new Date(year, month, day - weekDay + 1),
       new Date(year, month, day + 7 - weekDay)
@@ -237,59 +291,60 @@ export default class extends Component {
   };
 
   //是否为active区域
-  isActive = ({ type, date: value }) => {
+  private isActive = ({ type, date: value }: ItemDateType): boolean => {
     const { showToday, showWeek } = this.props;
     const { date } = this.state;
+    
     if (showWeek) {
       const [start, end] = this.getThisWeek(date);
       return (
         start.getTime() <= value.getTime() && end.getTime() >= value.getTime()
       );
     } else if (showToday) {
-      return date.getDate() === value.getDate() && type === "now";
+      return date.getDate() === value.getDate() && type === EDateType.now;
     }
     return false;
   };
 
-  basicColor = () => ({ color: this.props.colorStyle });
+  private basicColor = () => ({ color: this.props.colorStyle || DEFAULT_COLOR_STYLE });
 
-  itemColorStyle = type => ({
+  private itemColorStyle = (type: EDateType) => ({
     color:
-      type !== "now"
+      type !== EDateType.now
         ? sixteen2Rgb(
-            this.props.colorStyle,
+            this.props.colorStyle || DEFAULT_COLOR_STYLE,
             rgb =>
               `rgb(${new Array(3)
                 .fill(
-                  Math.floor(rgb.reduce((acc, item) => (acc += item), 0) / 3)
+                  Math.floor(rgb.reduce((acc: number, item: any) => (acc += item), 0) / 3)
                 )
                 .join(",")}, 0.8)`
           )
         : sixteen2Rgb(
-            this.props.colorStyle,
+            this.props.colorStyle || DEFAULT_COLOR_STYLE,
             rgb =>
               `rgb(${new Array(3).fill(
-                Math.floor(rgb.reduce((acc, item) => (acc += item), 0) / 5)
+                Math.floor(rgb.reduce((acc, item: any) => (acc += item), 0) / 5)
               )})`
           )
   });
 
-  dateColorStyle = (item, nextStyle) => ({
+  private dateColorStyle = (item: ItemDateType, nextStyle: any) => ({
     ...(this.isActive(item)
       ? {
           backgroundColor: this.props.colorStyle,
           color: sixteen2Rgb(
-            this.props.colorStyle,
-            rgb => `rgb(${rgb.map(color => 255 - color).join(",")})`
+            this.props.colorStyle || DEFAULT_COLOR_STYLE,
+            rgb => `rgb(${rgb.map(color => 255 - +color).join(",")})`
           ),
           ...nextStyle
         }
       : {})
   });
 
-  lunerColorStyle = active => ({
+  private lunerColorStyle = (active: boolean) => ({
     color: active
-      ? sixteen2Rgb(this.props.colorStyle, rgb => {
+      ? sixteen2Rgb(this.props.colorStyle || DEFAULT_COLOR_STYLE, rgb => {
           const max = Math.max.apply(null, rgb);
           const index = rgb.indexOf(max);
           const newRgb = new Array(3).fill(0);
@@ -297,16 +352,16 @@ export default class extends Component {
           return `rgb(${newRgb.join(",")})`;
         })
       : sixteen2Rgb(
-          this.props.colorStyle,
+          this.props.colorStyle || DEFAULT_COLOR_STYLE,
           rgb =>
             `rgb(${new Array(3)
-              .fill(Math.floor(rgb.reduce((acc, item) => (acc += item), 0) / 3))
+              .fill(Math.floor(rgb.reduce((acc: number, item: any) => (acc += item), 0) / 3))
               .join(",")}, 0.6)`
         )
   });
 
-  hotColorStyle = () => ({
-    backgroundColor: sixteen2Rgb(this.props.colorStyle, rgb => {
+  private hotColorStyle = () => ({
+    backgroundColor: sixteen2Rgb(this.props.colorStyle || DEFAULT_COLOR_STYLE, rgb => {
       const max = Math.max.apply(null, rgb);
       const index = rgb.indexOf(max);
       const newRgb = new Array(3).fill(0);
@@ -315,7 +370,7 @@ export default class extends Component {
     })
   });
 
-  render() {
+  public render() {
     const {
       collapse,
       lunerVisible,
@@ -345,11 +400,11 @@ export default class extends Component {
             }, 1fr)`
           }}
         >
-          {list.map((item, index) => {
+          {list.map((item: any, index: number) => {
             const { value, date, type } = item;
             const { holiday, active } = getDateName(date);
             const day = date && date.getDay();
-            return index <= 6 ? (
+            return (index <= 6) ? (
               <div
                 key={index}
                 className="glf-calendar-item glf-calendar-content-week"
@@ -362,7 +417,7 @@ export default class extends Component {
                 key={index}
                 className={`glf-calendar-item glf-calendar-content-days`}
                 style={{
-                  ...(!showLastNext && type === "now" && date.getDate() === 1
+                  ...(!showLastNext && type === EDateType.now && date.getDate() === 1
                     ? { gridColumnStart: date.getDay() + 1 }
                     : {}),
                   ...this.itemColorStyle(type)
@@ -428,3 +483,5 @@ export default class extends Component {
     );
   }
 }
+
+export default Calendar

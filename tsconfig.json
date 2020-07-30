@@ -8,12 +8,19 @@
     "noImplicitAny": true,
     "noUnusedLocals": true,
     "rootDir": "src",
-    "outDir": "lib"
+    "outDir": "lib",
+    "baseUrl": "./",
+    "paths": {
+      "@/*": ["src/*"]
+    },
   },
   "exclude": [
     "node_modules",
     "lib",
-    "es"
+    "es",
+  ],
+  "include": [
+    "./src/*"
   ],
   "compileOnSave": false
 }

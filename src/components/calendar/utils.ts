@@ -1,13 +1,13 @@
-const getDateName = date => {
+const getDateName = (date: Date | number) => {
   let holiday = getHoliday_1(date);
   let active = true;
   if (!holiday) {
-    const lunarDate = getLunarDate(date);
+    const lunarDate: { [key: string]: number | undefined } = getLunarDate(date);
     holiday = getHoliday_2(lunarDate);
     if (!holiday) {
       active = false;
       const { day } = lunarDate;
-      holiday = getChineseDay(day);
+      holiday = day ? getChineseDay(day) : '';
     }
   }
   return {
@@ -16,18 +16,18 @@ const getDateName = date => {
   };
 };
 
-const getHoliday_1 = date => {
-  let _date;
+const getHoliday_1 = (date: Date | number | string) => {
+  let _date:Date;
   if (Object.prototype.toString.call(date) === "[object Date]") {
-    _date = date;
+    _date = new Date(date);
   } else if (typeof date === "number") {
     _date = new Date(date);
-  } else if (!Number.isNaN(parseInt(date, 10))) {
+  } else if (typeof date === 'string' && !Number.isNaN(parseInt(date, 10))) {
     _date = new Date(parseInt(date, 10));
   } else {
     return false;
   }
-  const holidaylist = {
+  const holidaylist:any = {
     "1-1": "元旦",
     "2-14": "情人节",
     "3-8": "妇女节",
@@ -43,8 +43,8 @@ const getHoliday_1 = date => {
   return holidaylist[`${_date.getMonth() + 1}-${_date.getDate()}`];
 };
 
-const getHoliday_2 = lunarDate => {
-  var holidaylist = {
+const getHoliday_2 = (lunarDate: { [key: string]: number | undefined }) => {
+  var holidaylist: { [key: string]: string } = {
     "1-1": "春节",
     "1-15": "元宵节",
     "5-5": "端午节",
@@ -60,7 +60,7 @@ const getHoliday_2 = lunarDate => {
   return holidaylist[month + "-" + day];
 };
 
-function getChineseDay(d) {
+function getChineseDay(d: number) {
   var nStr1 = [
     "日",
     "一",
@@ -193,7 +193,7 @@ var lunar = {
   ]
 };
 
-function getLunarDate(date) {
+function getLunarDate(date: Date | number) {
   var year, month, day;
   let _date = date;
 
@@ -254,7 +254,7 @@ function getLunarDate(date) {
   };
 }
 
-const sixteen2Rgb = (color, fn) => {
+const sixteen2Rgb = (color: string, fn: (rgb: Array<number | string>) => string) => {
   const reg16 = /^#[0-9a-fA-F]{3}|[0-9a-fA-F]{6}$/;
   if (!reg16.test(color)) return color;
   const numArr = color.slice(1).split("");

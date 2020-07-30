@@ -1,13 +1,15 @@
 const path = require('path')
-const merge = require('webpack-merge')
+const { merge } = require('webpack-merge')
 const baseConfig = require('./webpack.base')
+const HtmlWebpackPlugin = require('html-webpack-plugin')
+const { CleanWebpackPlugin } = require('clean-webpack-plugin')
 
 module.exports = merge(baseConfig, {
   mode: "development",
   entry: path.resolve(__dirname, '../src/index.js'),
   output: {
-    path: path.resolve(__dirname, './dist'),
-    filename: "bundle.js"
+    path: path.resolve(__dirname, '../lib'),
+    filename: "[name].[hash].bundle.js"
   },
   module: {
     rules: [
@@ -22,22 +24,20 @@ module.exports = merge(baseConfig, {
       },
       {
         test: /\.(png|jpg|fig|jpeg)$/,
-        use: "file-loader"
-      },
-      {
-        test: /\.tsx?$/,
-        use: {
-          loader: 'ts-loader'
-        }
+        use: "url-loader"
       }
     ]
   },
+  plugins: [
+    new HtmlWebpackPlugin(),
+    new CleanWebpackPlugin()
+  ],
   devServer: {
-    contentBase: path.resolve(__dirname, '../dist'),
+    contentBase: path.resolve(__dirname, '../lib'),
     hot: true,
     compress: true,
     port: 3001,
-    open: true,
+    // open: true,
     // proxy: {
     //   '': {
     //     target: '',
