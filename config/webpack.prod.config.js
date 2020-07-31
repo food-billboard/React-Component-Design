@@ -8,12 +8,13 @@ const webpack = require('webpack')
 
 module.exports = merge(baseConfig, {
   mode: 'production',
-  entry: path.resolve(__dirname, '../src/index.js'),
+  entry: path.resolve(__dirname, '../src/index.ts'),
   output: {
     path: path.resolve(__dirname, '../lib'),
     filename: 'index.js',
     libraryTarget: 'umd',
-    libraryExport: 'default'
+    libraryExport: 'default',
+    chunkFilename: '[name].[chunkhash:8].chunk.js',
   },
   module: {
     rules: [
@@ -60,26 +61,26 @@ module.exports = merge(baseConfig, {
     }),
   ],
   optimization: {
-    // splitChunks: {
-    //   cacheGroups: {
-    //     vendor: {
-    //       name: 'vendor',
-    //       filename: '[name].js',
-    //       minChunks: function(module, count) {
-    //         return (
-    //           module.resource &&
-    //           /\.js$/.test(module.resource) &&
-    //           module.resource.indexOf(path.join(__dirname, './node_modules')) === 0
-    //         )
-    //       }
-    //     },
-    //     runtime: {
-    //       name: 'runtime',
-    //       filename: '[name].js',
-    //       chunks: ['vendor']
-    //     }
-    //   }
-    // }
+    splitChunks: {
+      chunks: 'all', //async all initial
+      minSize: 30000,
+      minChunks: 1,
+      maxAsyncRequests: 5,
+      maxInitialRequests: 3,
+      automaticNameDelimiter: '~',
+      name: true,
+      cacheGroups: {
+        vendors: {
+          test: /[\\/]node_modules[\\/]/,
+          priority: -10
+        },
+        default: {
+          minChunks: 2,
+          priority: -20,
+          reuseExistingChunk: true
+        }
+      }
+    }
   },
   externals: {
     react: {

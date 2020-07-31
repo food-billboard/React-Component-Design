@@ -1,5 +1,6 @@
 import React, { Component, ReactNode } from "react";
 import { getDateName, sixteen2Rgb } from "./utils";
+import { noop } from 'lodash'
 import "./index.css";
 
 export interface CalendarProps {
@@ -7,7 +8,7 @@ export interface CalendarProps {
   lunerVisible?: boolean
   showToday?: boolean
   showWeek?: boolean
-  activeStyle?: any
+  activeStyle?: React.CSSProperties
   value?: false | Date | number
   hot?: false | Array<Date> | ((date: Date) => boolean)
   renderHeader?: false | ((date: Date) => ReactNode)
