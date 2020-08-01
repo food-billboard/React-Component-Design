@@ -1,6 +1,5 @@
 import React, { Component, ReactNode } from "react";
 import { getDateName, sixteen2Rgb } from "./utils";
-import { noop } from 'lodash'
 import "./index.css";
 
 export interface CalendarProps {

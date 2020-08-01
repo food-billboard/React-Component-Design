@@ -4,6 +4,7 @@ const baseConfig = require('./webpack.base')
 const MiniCssExtractPlugin = require('mini-css-extract-plugin')
 const UglifyWebpackPlugin = require('uglifyjs-webpack-plugin')
 const CompressionPlugin = require('compression-webpack-plugin')
+const BundleAnalyzerPlugin   = require('webpack-bundle-analyzer').BundleAnalyzerPlugin  
 const webpack = require('webpack')
 
 module.exports = merge(baseConfig, {
@@ -59,6 +60,7 @@ module.exports = merge(baseConfig, {
     new CompressionPlugin({
       test: /\.tsx?$/
     }),
+    new BundleAnalyzerPlugin()
   ],
   optimization: {
     splitChunks: {
