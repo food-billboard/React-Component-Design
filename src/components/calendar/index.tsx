@@ -166,12 +166,13 @@ class Calendar extends Component<CalendarProps, CalendarState> {
 
   //获取需要显示的日期数据
   private getVisibleDate = (): Array<ItemWeekType | ItemDateType> => {
-    const { collapse, showLastNext } = this.props;
+    const { collapse, showLastNext, value } = this.props;
     const { date } = this.state;
+    const realDate = new Date(value ? value : date)
 
-    const month:number = date.getMonth() + 1;
-    const year:number = date.getFullYear();
-    const day:number = date.getDate()
+    const month:number = realDate.getMonth() + 1;
+    const year:number = realDate.getFullYear();
+    const day:number = realDate.getDate()
 
     let visibleDate:Array<ItemWeekType | ItemDateType> = [...this.week];
 
@@ -279,11 +280,24 @@ class Calendar extends Component<CalendarProps, CalendarState> {
 
   public nextDay = (date?: Date) => this.next(EDateChangeType.day, date);
 
+  public isSameYear = (dateA:Date, dateB:Date) => dateA.getFullYear() === dateB.getFullYear()
+
+  public isSameMonth = (dateA:Date, dateB:Date) => this.isSameYear(dateA, dateB) && dateA.getMonth() === dateB.getMonth()
+
+  public isSameWeek = (dateA:Date, dateB:Date) => {
+    const [aStart, aEnd] = this.getThisWeek(dateA)
+    const [bStart, bEnd] = this.getThisWeek(dateB)
+    return this.isSameMonth(dateA, dateB) && aStart.getDate() === bStart.getDate() && aEnd.getDate() === bEnd.getDate()
+  }
+
+  public isSameDay = (dateA:Date, dateB:Date) => this.isSameWeek(dateA, dateB) && dateA.getDate() === dateB.getDate()
+
   public getThisWeek = (date: Date): [Date, Date] => {
-    const weekDay:number = date.getDay();
+    let weekDay:number = date.getDay();
     const day: number = date.getDate();
     const year: number = date.getFullYear();
     const month: number = date.getMonth();
+    weekDay = weekDay === 0 ? 7 : weekDay
     return [
       new Date(year, month, day - weekDay + 1),
       new Date(year, month, day + 7 - weekDay)
@@ -292,16 +306,17 @@ class Calendar extends Component<CalendarProps, CalendarState> {
 
   //是否为active区域
   private isActive = ({ type, date: value }: ItemDateType): boolean => {
-    const { showToday, showWeek } = this.props;
+    const { showToday, showWeek, value:propsValue } = this.props;
     const { date } = this.state;
+    const realDate = new Date(propsValue ? propsValue : date)
     
     if (showWeek) {
-      const [start, end] = this.getThisWeek(date);
+      const [start, end] = this.getThisWeek(realDate);
       return (
         start.getTime() <= value.getTime() && end.getTime() >= value.getTime()
       );
     } else if (showToday) {
-      return date.getDate() === value.getDate() && type === EDateType.now;
+      return realDate.getDate() === value.getDate() && type === EDateType.now;
     }
     return false;
   };

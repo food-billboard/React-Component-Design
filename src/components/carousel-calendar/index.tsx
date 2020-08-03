@@ -4,7 +4,7 @@ import Calendar from '../calendar'
 import { noop } from 'lodash'
 
 export interface CarouselCalendarProps {
-  value?: Date | false | number
+  value: Date | number
   hotDateList?: false | Array<Date> | ((date: Date) => boolean)
   onPageChange?: (from: number | null, to: number) => any
   onChange?: (date: Date) => any
@@ -29,7 +29,7 @@ type TDoc = [ { now: Date }, { next: Date }, { past: Date } ]
 export default class extends Component<CarouselCalendarProps, CarouselCalendarState> {
 
   public static defaultProps: CarouselCalendarProps = {
-    value: false,
+    value: new Date(),
     hotDateList: false,
     onPageChange:noop,
     onChange: noop
@@ -48,6 +48,32 @@ export default class extends Component<CarouselCalendarProps, CarouselCalendarSt
       next: new Date(year, month + 1),
       active: 0,
       collapse: false
+    }
+  }
+
+  public componentDidUpdate = (prevProps: CarouselCalendarProps) => {
+    const { value:nowValue } = this.props
+    const { value:prevValue } = prevProps
+    const realNowValue = new Date(nowValue)
+    const realPrevValue = new Date(prevValue)
+    const { now, next, past, active, collapse } = this.state
+
+    if(collapse) return
+
+    //当前活跃页未在指定日期范围内，则整体切换日历
+    if(realPrevValue.getFullYear() !== realNowValue.getFullYear() || realPrevValue.getMonth() !== realNowValue.getMonth()) {
+      const DOC: TDoc = [ { now }, { next }, { past } ]
+      const activeDate = DOC[active]
+      const [activeKey]: any = Object.keys(activeDate)
+      const newDate: any = { [activeKey]: realNowValue }
+      DOC.splice(active, 1, newDate)
+      this.setState({
+        ...this.handleBsideChange(null, active, DOC, EDateChangeType.month, 1),
+        ...newDate
+      }, () => {
+        console.log(this.state)
+        this.props.onPageChange && this.props.onPageChange(active, active)
+      })
     }
   }
 
@@ -99,15 +125,7 @@ export default class extends Component<CarouselCalendarProps, CarouselCalendarSt
       return acc
     }, {})
 
-  private handleSelectDate = (date: Date) => {
-    const { now, past, next, active } = this.state
-    const dates = [now, next, past]
-    const activeDate: Date = dates[active]
-
-    if(date.getFullYear() === activeDate.getFullYear() && date.getMonth() === activeDate.getMonth()) {
-      this.props.onChange && this.props.onChange(date)
-    }
-  }
+  private handleSelectDate = (date: Date) => this.props.onChange && this.props.onChange(date)
 
   private isThisDate = (date: Date) => {
     const { value } = this.props
@@ -115,7 +133,7 @@ export default class extends Component<CarouselCalendarProps, CarouselCalendarSt
     const realDate = new Date(value ? value : new Date())
 
     if(!collapse) return realDate.getFullYear() === date.getFullYear() && realDate.getMonth() === date.getMonth()
-    if(!this.calendarRef.current) return false
+    if(!this.calendarRef) return false
     const [start, end] = this.calendarRef.current!.getThisWeek(date)
     return (start.getTime() <= realDate.getTime() && end.getTime() >= realDate.getTime())
   }
@@ -131,8 +149,15 @@ export default class extends Component<CarouselCalendarProps, CarouselCalendarSt
   }
 
   handleCollapse = () => {
-    const { collapse, active } = this.state
+    const { value } = this.props
+    const realValue = new Date(value)
+    const { collapse, active, now, next, past } = this.state
+    const DOC:TDoc = [ {now}, {next}, {past} ]
+    const activeDate = DOC[active]
+    const [activeKey]:any = Object.keys(activeDate)
+    const newDate = { [activeKey]: realValue }
     this.setState({
+      ...newDate,
       collapse: !collapse
     }, () => {
       this.handleChange(null, active)
